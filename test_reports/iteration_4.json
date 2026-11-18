@@ -1,0 +1,32 @@
+{
+  "summary": "Fresh-restore smoke test of the RUBIN PHP casino. Everything requested PASSES. Home (mobile + desktop): RUBIN brand, banner carousel (3 slides + dots), 'Оригинальные игры' cards and bottom nav (Главная/Игры/Депозит/Бонусы/Рефералы) all render. Login with tst465641/Test12345 works through the modal, and the session survives a reload. Registering a new user (TESTr30712) logged that user in, the session survived a reload, and the header showed 0.00 ₽. /dice /mines /bubbles /x50 /bonus /me /ref /slot load for a logged-in user with no PHP errors. A 1 ₽ dice bet returned a result from action.php and the balance went from 991 to 990. /admin while logged out shows the admin login form; logging in through it opens the dashboard. /admin/users, rtp, slots, promo, find and slotpromo all load. POST /api/slots/callback returns the JSON {ok:false, error:'server_misconfigured'} with HTTP 500, which is expected while SLOTS_API_SECRET/WGC_API_KEY are not set. The new pytest smoke suite passed 19/19.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/slots/callback", "issue": "Returns HTTP 500 with server_misconfigured because SLOTS_API_SECRET/WGC_API_KEY are not set (EXPECTED until the keys are added; restart frontend afterwards so PHP picks up the env)"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Legacy JS (pre-existing)", "issue": "Console pageerrors: 'ClipboardJS is not defined' (script/script.js), 'Cannot read properties of null (reading setAttribute)' on /, 'chatc is not defined' (ajax/func.js uses an undefined chatc var), and 'no supported source' audio on /dice. None of them break any flow.", "selector": "script/script.js, ajax/func.js", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_rubin_restore_smoke.py", "/app/test_reports/pytest/restore_smoke.xml"],
+  "action_items": [
+    "None blocking. When the user provides keys: set SLOTS_API_SECRET, WGC_API_KEY, CRYPTOBOT_TOKEN, XROCKET_TOKEN and restart frontend (PHP reads the process env)",
+    "Optional (LOW): fix the legacy JS errors (ClipboardJS, chatc)"
+  ],
+  "critical_code_review_comments": [
+    "action.php builds SQL by string interpolation ($login, $user_id...) in many places, which is a SQL injection risk. This is legacy code left as-is per the user's request.",
+    "test_credentials.md is empty. Add tst465641 / Test12345 (admin) there."
+  ],
+  "updated_files": ["/app/backend/tests/test_rubin_restore_smoke.py"],
+  "success_rate": {"backend": "100% (19/19 smoke pytest; callback misconfig expected)", "frontend": "100% of requested flows"},
+  "test_credentials": "tst465641 / Test12345 (admin=1). /app/memory/test_credentials.md is EMPTY, so flagging it.",
+  "seed_data_creation": "Registered TESTr30712 (id 1575) and deleted it afterwards by id. The 1 ₽ dice test bet lowered tst465641 (id 1559) from 991 to 990 and left one kot_games row (dice, 1 ₽, lose).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: cd /app/backend && REACT_APP_BACKEND_URL=<url> pytest tests/test_rubin_restore_smoke.py -p no:xdist -o addopts=''. MySQL CLI: /app/casino/.runtime/mysql/bin/mysql --socket=/app/casino/mysql-run/mysql.sock -u root beezename. To log in, POST /action.php with type=login. On mobile the header 'Регистрация' button is visible but the modal tab with the same text is hidden, so use the locator visible=true. Admin login form uses data-testid admin-login-input/admin-password-input/admin-login-submit. The WGC tests in test_rubin_wgc_callback.py need SLOTS_API_SECRET and were not run."
+}

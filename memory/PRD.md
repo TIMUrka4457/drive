@@ -71,3 +71,8 @@ Download zip from Google Drive, run the user's Replit project as-is (no rewrite)
 - Iteration 12: testing_agent iteration_1 — 100% pass (login in iframe, registration, /slot -> redirect to play.worldgamingconnect.com, /api/slots/callback signature/idempotency/rollback). wgc_wallet tx lookups now scoped by is_test. Tests: backend/tests/test_rubin_wgc_callback.py
 - Pending: real WGC callbacks not yet received (no real browser opened a game yet; session firstOpenedAt null)
 - Iteration 13 (slots QA): wgc_games.rejected (1=probe, 2=failed player launch) hides games from catalog; admin /admin/slots "Проверить провайдеров" (background inc/wgc_probe_cli.php) hid 23 studios / 2122 games; wallet accepts kinds tournament/bonus; wgc_tx unique (tx_id,is_test); admin player page shows slot bets + summary + round actions (wgcRound) and last 50 own-game bets; /bonus promo toast shows server message; slotpromo freespins-disabled check cached 1h; start-emergent.sh retries apt install. Tests iteration_2/3 pass (20/20 pytest). WGC freespin API returns "No such endpoint" — must be enabled by WGC manager.
+
+## Iteration 14 (2026-11) — restore from GitHub TIMUrka4457/cloud-drive
+- casino/, backend server.py (slots callback proxy), frontend package.json start script copied; PHP 8.2 installed; CASINO_PHP_URL added to backend/.env
+- MySQL 8.0.46 starts with original data (14 users, 19103 WGC games); testing iteration_4: 100% pass
+- Pending: SLOTS_API_SECRET, WGC_API_KEY, CRYPTOBOT_TOKEN, XROCKET_TOKEN (user will provide)
