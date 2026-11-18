@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import suppress
-from fastapi import FastAPI, APIRouter, Query
+from fastapi import FastAPI, APIRouter, Query, Request, Response
+import httpx
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -85,6 +86,15 @@ async def get_status_checks(limit: int = Query(20, ge=1, le=100)):
             check['timestamp'] = datetime.fromisoformat(check['timestamp'])
     
     return status_checks
+
+# WGC slots callback: forward the signed request unchanged to the PHP wallet
+@api_router.post("/slots/callback")
+async def slots_callback(request: Request):
+    body = await request.body()
+    headers = {k: v for k, v in request.headers.items() if k.lower() in ("content-type", "x-wgc-signature", "x-wgc-test", "x-request-id")}
+    async with httpx.AsyncClient(timeout=25) as cli:
+        r = await cli.post(f"{os.environ['CASINO_PHP_URL']}/wgc_wallet.php", content=body, headers=headers)
+    return Response(content=r.content, status_code=r.status_code, media_type="application/json")
 
 # Include the router in the main app
 app.include_router(api_router)

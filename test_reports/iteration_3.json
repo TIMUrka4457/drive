@@ -1,0 +1,27 @@
+{
+  "summary": "Retest of the RUBIN WGC fixes. All 3 fixes PASS and the regression checks PASS. Fix 1: wgc_tx now has UNIQUE KEY tx_test(tx_id,is_test). pytest test_rubin_wgc_callback.py passed 20/20, including the sandbox rollback with txId 'fs-t1'. A manual sandbox writeBet with transactionId 'fs-t1' returned 200 ok:true. The real fs-t1 row (is_test=0, rolled_back=0, win 15.5) was untouched and the real balances did not change (1559=991, 1562=15.5). I deleted the sandbox row afterwards. Fix 2: on /bonus an unknown code shows the toast 'Промокод не найден'. I created TESTFS3 (Sweet Cherry Blossom) through fs-add-btn/fs-game-search/fs-code/fs-create-btn and it appeared in fs-promo-table. Activating it shows the toast 'Фриспины временно недоступны', the balance stayed 991 and promo.used stayed 0. I deleted the promo with fs-delete-3 (it disappeared from the table) and deleted the failed grant row id=4. Fix 3: the probe was started from /admin/slots. The button showed 'Проверка идёт…' and was disabled. Polling every 8-10 s during the whole run (23:36:58 to 23:39:55, about 3 min): the hidden count stayed at 2123 and never dropped, and /slot?brand=Habanero always showed slots-empty. After the run: rejected=1 2122, rejected=2 1, judgemental-1 still rejected=2, probe_state 'done'. /playslot retest: I set judgemental-1 to rejected=0 and opened /playslot?g=judgemental-1. It showed slot-error ('недоступна у провайдера…'), slot-error-back goes to /slot, the DB value went back to 2, and searching for 'judgemental' gives slots-empty. Regression: login works; /slot shows 48 cards on the first page; sweet-bonanza-1 redirects to play.worldgamingconnect.com; /admin/users?uid=1559 has no JS errors and player-slot-bets shows 'Ставок в слотах пока нет'; on /admin/users?uid=1562 the Раунд button shows 'WGC: not_found' inline and the 'Ставки в играх (последние 50)' table is there; /admin/slotpromo shows the fs-api-disabled banner and wgc_meta fs_disabled_until is set about 1h ahead.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Public pages (/, /slot, /playslot, /bonus): legacy theme JS", "issue": "Console pageerrors on every public page: 'ClipboardJS is not defined' (script/script.js:473 calls new ClipboardJS, but the clipboard lib files/cbrd.js is not loaded before it) and 'Cannot read properties of undefined (reading Api)' (dataTables.responsive loaded without dataTables). The /bonus page also has 'Cannot read properties of null (reading setAttribute)'. These are pre-existing, and the slot and promo flows still work.", "selector": "script/script.js", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_rubin_wgc_callback.py", "/app/test_reports/pytest/wgc_iter3.xml"],
+  "action_items": [
+    "Optional: fix the legacy JS errors (load the ClipboardJS lib before script.js or guard with typeof ClipboardJS; drop dataTables.responsive or load it after dataTables)",
+    "Optional: the wgc-probe-state text 'Готово' only appears through live polling. After a page reload it shows 'Последняя проверка: <date>', which is fine but different wording"
+  ],
+  "critical_code_review_comments": [
+    "wgc_probe swap at the end uses 3 non-atomic UPDATEs (reset rejected=1 -> 0, then re-apply). There is a short window of a few ms where hidden games are visible. Acceptable, but it could be wrapped in a transaction.",
+    "playslot.php does not refuse rejected>0 games up front. A direct URL still calls the WGC session API, which is harmless because the provider rejects it and rejected stays 2.",
+    "admin/slotpromo.php caches fs_disabled_until for 1h, so after WGC enables freespins the banner can stay up to 1h (by design)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (20/20 pytest + manual sandbox writeBet)", "frontend": "100% of requested flows"},
+  "seed_data_creation": "Temp promo TESTFS3 (id 3) and grant id 4 were created and deleted; the sandbox wgc_tx row fs-t1/is_test=1 was deleted. Final state: user 1559 balance 991, wgc_tx 1 row (fs-t1 real), wgc_fs_promo 1 row, wgc_fs_grant 2 rows, users 1569/1570 untouched, judgemental-1 rejected=2.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: cd /app/backend && REACT_APP_BACKEND_URL=<url> pytest tests/test_rubin_wgc_callback.py -p no:xdist -o addopts=''. To log in, set #userLogin/#userPass and click #butEnter via JS on /. Use an async dialog handler (fsDel uses confirm). The header #userBalance is an odometer, so read the balance from the DB or the admin page. wgc_games key is public_id (not slug). The probe takes about 3 min."
+}

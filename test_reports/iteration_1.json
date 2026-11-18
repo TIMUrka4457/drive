@@ -1,0 +1,34 @@
+{
+  "summary": "Tested the RUBIN PHP casino WGC slots integration end to end. Backend: 11/11 pytest tests pass for /api/slots/callback (FastAPI proxy to wgc_wallet.php): getBalance for rubin-1559 matches the DB (991), bad or missing signature gives 401 invalid_signature, unknown_command gives 404, unknown player and wrong currency are handled, sandbox writeBet is idempotent (same answer, no second debit), rollback restores the balance and a repeated rollback does not reverse twice, rollback-before-bet blocks a later writeBet (transaction_rolled_back), insufficient_funds works, invalid amounts and a missing txId give 400. The real balance of tst465641 did not change. Frontend: login works at top level and inside a cross-origin iframe (PHPSESSID has Secure; SameSite=None; Partitioned). Registration creates and logs in the user; a duplicate login is rejected (no second DB row). /slot shows 48 cards (17375 slots). Clicking a card and /playslot?g=3-buzzing-wilds-2 or book-hotfire-buy-bonus-1 redirect to play.worldgamingconnect.com/play/... in the same tab, with no iframe. 3-dancing-monkeys-1 shows slot-error 'Не удалось открыть игру' (provider side). Logged out, the page shows slot-login-required. /admin/slots shows key боевой, secret задан, 19103 games, and a callback URL ending in /api/slots/callback.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/slots/callback rollback", "issue": "If body has test:true and the transactionId belongs to a REAL (is_test=0) tx, rollback reverses it against the sandbox wallet and marks the real tx rolled_back. This needs a valid HMAC, so the risk is low. Also check is_test matches on lookup."},
+      {"endpoint": "/api/slots/callback", "issue": "Proxy does not forward the X-WGC-Command header. Not used today (the command comes from the body), so this is informational."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login modal", "issues": ["Wrong password shows 'Пользователь не найден' (action.php:1901), which is misleading for an existing login with a bad password"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_rubin_wgc_callback.py", "/app/test_reports/pytest/pytest_wgc.xml"],
+  "action_items": [
+    "Optional: in the wgc_wallet.php rollback/writeBet lookup, add 'AND is_test=?' so sandbox calls can never touch real tx rows",
+    "Optional: add HttpOnly to the PHPSESSID cookie in the router.php header_register_callback"
+  ],
+  "critical_code_review_comments": [
+    "wgc_wallet.php: tx lookups by tx_id ignore is_test, so sandbox and real tx share one namespace",
+    "Pre-existing real tx #7 (fs-t1, user rbtest1556 #1562, win 15.50, is_test=0) shows in admin. It was created before this test run, probably by earlier dev testing, and it credited a real balance (1562 has 15.5). Check whether it should stay.",
+    "Existing users TestUser99 (1556), tst752423 (1560), rbtest1556 (1562), rbui7333 (1563) look like leftover test accounts from earlier sessions"
+  ],
+  "updated_files": ["/app/backend/tests/test_rubin_wgc_callback.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "tst465641 / Test12345 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created and then deleted test user tstreg82100 (id 1571). Created TEST_ sandbox wgc_tx rows and deleted them (wgc_tx count is back to 1). The wgc_test_wallet row 'TEST_sandbox_player' remains, as allowed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=... pytest tests/test_rubin_wgc_callback.py -p no:xdist -o addopts=''. It needs SLOTS_API_SECRET in env and the mysql client. A module fixture asserts the real balance of 1559 is unchanged and deletes TEST_ tx rows."
+}
