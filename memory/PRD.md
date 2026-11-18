@@ -76,3 +76,7 @@ Download zip from Google Drive, run the user's Replit project as-is (no rewrite)
 - casino/, backend server.py (slots callback proxy), frontend package.json start script copied; PHP 8.2 installed; CASINO_PHP_URL added to backend/.env
 - MySQL 8.0.46 starts with original data (14 users, 19103 WGC games); testing iteration_4: 100% pass
 - Pending: SLOTS_API_SECRET, WGC_API_KEY, CRYPTOBOT_TOKEN, XROCKET_TOKEN (user will provide)
+
+## Iteration 15 (2026-11)
+- WGC_API_KEY + SLOTS_API_SECRET added via secrets (live key), PHP sees them after frontend restart; WGC API OK, /playslot creates session and redirects to play.worldgamingconnect.com; callback pytest 20/20 pass
+- WGC panel Callback URL: <preview>/api/slots/callback
