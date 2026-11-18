@@ -371,3 +371,20 @@ html body #rb-brand { position: fixed !important; }
 .rb-wgc-card { aspect-ratio: 3 / 4 !important; }
 .rb-wgc-card img { height: 100% !important; object-fit: cover !important; }
 .rb-wgc-card img[src*="/placeholder/"] { object-fit: contain !important; }
+
+/* Cashier mobile fit */
+.rb-cash { max-width: 100%; overflow-x: hidden; padding-bottom: 90px; box-sizing: border-box; }
+.rb-cash *, .rb-cash *::before, .rb-cash *::after { box-sizing: border-box; }
+.rb-methods { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.rb-method { min-width: 0; padding: 12px 10px; }
+.rb-method-logo { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+.rb-method-txt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rb-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.rb-chips[data-testid="withdraw-asset-chips"] { grid-template-columns: 1fr 1fr; }
+.rb-chip { min-width: 0; padding: 0 4px; font-size: 13px; white-space: nowrap; }
+.rb-chip.active { border-color: var(--rb-ruby); background: rgba(224,36,94,.15); }
+.rb-row { min-width: 0; }
+.rb-st { flex: 0 0 auto; white-space: nowrap; }
+select.rb-input { appearance: none; -webkit-appearance: none; background: var(--rb-bg2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23fff' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 14px center; font-size: 15px; color: #fff; }
+select.rb-input option { background: #15151c; color: #fff; }
+.rb-cash .bw-page-title { margin-top: 8px; }

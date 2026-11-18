@@ -25,13 +25,13 @@ if (!empty($_SESSION['hash'])) {
 
   <div class="rb-methods" data-testid="cashier-methods">
     <button class="rb-method active" data-p="cryptobot" data-testid="method-cryptobot">
-      <span class="rb-method-logo cb">CB</span>
-      <span class="rb-method-txt"><b>CryptoBot</b><small>USDT · TON · BTC · ETH · LTC · BNB · TRX · USDC</small></span>
+      <img class="rb-method-logo" src="/images/pay-cryptobot.png?v=2" alt="CryptoBot" data-testid="method-cryptobot-logo">
+      <span class="rb-method-txt"><b>CryptoBot</b></span>
       <?php if (!$pv['cryptobot']) { ?><span class="rb-soon">скоро</span><?php } ?>
     </button>
     <button class="rb-method" data-p="xrocket" data-testid="method-xrocket">
-      <span class="rb-method-logo xr"><span class="material-icons">rocket_launch</span></span>
-      <span class="rb-method-txt"><b>xRocket</b><small>TON · USDT · BTC и ещё 60+ монет</small></span>
+      <img class="rb-method-logo" src="/images/pay-xrocket.png?v=2" alt="xRocket" data-testid="method-xrocket-logo">
+      <span class="rb-method-txt"><b>xRocket</b></span>
       <?php if (!$pv['xrocket']) { ?><span class="rb-soon">скоро</span><?php } ?>
     </button>
   </div>
@@ -42,7 +42,7 @@ if (!empty($_SESSION['hash'])) {
     <input class="rb-input" id="depSum" type="number" min="<?= $pc['min_dep'] ?>" step="1" value="500" data-testid="deposit-amount-input">
     <div class="rb-chips">
       <?php foreach ([100, 500, 1000, 2500, 5000] as $c) { ?>
-      <button class="rb-chip" onclick="document.getElementById('depSum').value=<?= $c ?>" data-testid="deposit-chip-<?= $c ?>"><?= $c ?> ₽</button>
+      <button class="rb-chip" onclick="document.getElementById('depSum').value=<?= $c ?>;rbDepCalc()" data-testid="deposit-chip-<?= $c ?>"><?= $c ?> ₽</button>
       <?php } ?>
     </div>
     <div id="depAssetBox" style="display:none">
@@ -50,7 +50,7 @@ if (!empty($_SESSION['hash'])) {
       <select class="rb-input" id="depAsset" onchange="rbDepCalc()" data-testid="deposit-asset-select"></select>
       <div class="rb-est" data-testid="deposit-estimate">К оплате ≈ <b id="depEst">—</b></div>
     </div>
-    <div class="rb-note" id="depNote" data-testid="deposit-note">Минимум <?= (float)$pc['min_dep'] ?> ₽ · Кешбэк <?= (float)$pc['cashback'] ?>% с каждого депозита · CryptoBot: оплата любой из 8 монет, сумма пересчитывается по курсу</div>
+    <div class="rb-note" id="depNote" data-testid="deposit-note">Минимум <?= (float)$pc['min_dep'] ?> ₽ · Кешбэк <?= (float)$pc['cashback'] ?>% с каждого депозита</div>
     <button class="rb-btn" id="depBtn" onclick="rbDeposit()" data-testid="deposit-submit-button">Пополнить</button>
   </div>
 
