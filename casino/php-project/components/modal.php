@@ -2332,9 +2332,10 @@ color: #020202c2;
 .bw-a-or { display:flex; align-items:center; gap:10px; margin:14px 0 10px; font-size:12px; color:#9ca3af; }
 .bw-a-or::before, .bw-a-or::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.1); }
 .bw-a-btn.bw-a-tg { background: linear-gradient(135deg,#2aabee,#1e88d2) !important; box-shadow: 0 8px 22px rgba(42,171,238,.3) !important; display:flex; align-items:center; justify-content:center; gap:8px; }
-.bw-a-tgwait { font-size:12px; color:#9ca3af; text-align:center; margin-top:8px; }
+.bw-a-tgw { display:flex; justify-content:center; min-height:44px; margin-bottom:6px; }
 </style>
 
+<?php if (!isset($GLOBALS['RB_TG_BOT'])) { require_once __DIR__ . '/../inc/tg.php'; try { $GLOBALS['RB_TG_BOT'] = tg_token() !== '' ? tg_bot_username() : ''; } catch (Throwable $e) { $GLOBALS['RB_TG_BOT'] = ''; } } ?>
 <div id="bw-auth-overlay">
   <div id="bw-auth-card">
 
@@ -2362,8 +2363,7 @@ color: #020202c2;
         <div id="error_enter" class="bw-a-error"></div>
         <button id="butEnter" class="bw-a-btn" type="button" onclick="login()">Войти</button>
         <div class="bw-a-or"><span>или</span></div>
-        <button class="bw-a-btn bw-a-tg" type="button" onclick="tgLogin(this)" data-testid="tg-login-login-button"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M21.9 4.3 18.8 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-8c.4-.3-.1-.5-.6-.2L6.7 12.9 2 11.4c-1-.3-1-1 .2-1.5L20.6 3c.8-.3 1.6.2 1.3 1.3z"/></svg> Войти через Telegram</button>
-        <div class="bw-a-tgwait" style="display:none" data-testid="tg-login-login-wait">Нажмите «Старт» в боте — вход произойдёт автоматически</div>
+        <div class="bw-a-tgw" data-testid="tg-widget-login"><script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="<?= htmlspecialchars($GLOBALS['RB_TG_BOT'] ?? '') ?>" data-size="large" data-radius="12" data-onauth="tgWidgetAuth(user)" data-request-access="write" data-lang="ru"></script></div>
         <div class="bw-a-note">Нажимая кнопку, вы подтверждаете что вам 18+ и соглашаетесь с <a href="/policy">условиями</a></div>
       </div>
     </div>
@@ -2394,8 +2394,7 @@ color: #020202c2;
         <div id="error_register" class="bw-a-error"></div>
         <button id="butRegister" class="bw-a-btn" type="button" onclick="register()">Создать аккаунт</button>
         <div class="bw-a-or"><span>или</span></div>
-        <button class="bw-a-btn bw-a-tg" type="button" onclick="tgLogin(this)" data-testid="tg-login-register-button"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M21.9 4.3 18.8 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-8c.4-.3-.1-.5-.6-.2L6.7 12.9 2 11.4c-1-.3-1-1 .2-1.5L20.6 3c.8-.3 1.6.2 1.3 1.3z"/></svg> Войти через Telegram</button>
-        <div class="bw-a-tgwait" style="display:none" data-testid="tg-login-register-wait">Нажмите «Старт» в боте — вход произойдёт автоматически</div>
+        <div class="bw-a-tgw" data-testid="tg-widget-register"><script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="<?= htmlspecialchars($GLOBALS['RB_TG_BOT'] ?? '') ?>" data-size="large" data-radius="12" data-onauth="tgWidgetAuth(user)" data-request-access="write" data-lang="ru"></script></div>
         <div class="bw-a-note">Нажимая кнопку, вы подтверждаете что вам 18+ и соглашаетесь с <a href="/policy">условиями</a></div>
       </div>
     </div>
@@ -2404,23 +2403,12 @@ color: #020202c2;
 </div>
 
 <script>
-var tgTimer = null;
-function tgLogin(btn) {
-  var w = window.open('', '_blank'), wait = btn.nextElementSibling, old = btn.innerHTML;
-  btn.disabled = true;
-  $.ajax({ type: 'POST', url: '/tglogin.php', data: { type: 'start' }, dataType: 'json', timeout: 20000 }).done(function (d) {
-    if (!d.success) { if (w) w.close(); btn.disabled = false; return new Noty({ type: 'error', layout: 'bottomLeft', theme: 'mint', timeout: 3000, text: d.error }).show(); }
-    if (w) w.location.href = d.url; else location.href = d.url;
-    wait.style.display = '';
-    var n = 0; clearInterval(tgTimer);
-    tgTimer = setInterval(function () {
-      if (++n > 300) { clearInterval(tgTimer); btn.disabled = false; wait.style.display = 'none'; return; }
-      $.post('/tglogin.php', { type: 'poll', token: d.token }, function (r) {
-        if (r.status === 'ok') { clearInterval(tgTimer); location.reload(); }
-        else if (!r.success) { clearInterval(tgTimer); btn.disabled = false; wait.style.display = 'none'; new Noty({ type: 'error', layout: 'bottomLeft', theme: 'mint', timeout: 3000, text: r.error }).show(); }
-      }, 'json');
-    }, 2000);
-  }).fail(function () { if (w) w.close(); btn.disabled = false; });
+function tgWidgetAuth(user) {
+  user.type = 'widget';
+  $.ajax({ type: 'POST', url: '/tglogin.php', data: user, dataType: 'json', timeout: 20000 }).done(function (r) {
+    if (r.success) location.reload();
+    else new Noty({ type: 'error', layout: 'bottomLeft', theme: 'mint', timeout: 3000, text: r.error }).show();
+  });
 }
 </script>
 <script>

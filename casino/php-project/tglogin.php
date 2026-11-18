@@ -38,4 +38,22 @@ if ($type === 'poll') {
     out(['success' => true, 'status' => 'ok']);
 }
 
+if ($type === 'widget') {
+    $d = [];
+    foreach (['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date'] as $k) if (isset($_POST[$k])) $d[$k] = (string)$_POST[$k];
+    $hash = (string)($_POST['hash'] ?? '');
+    ksort($d);
+    $check = implode("\n", array_map(fn($k) => "$k={$d[$k]}", array_keys($d)));
+    $want = hash_hmac('sha256', $check, hash('sha256', tg_token(), true));
+    if ($hash === '' || empty($d['id']) || !hash_equals($want, $hash)) out(['success' => false, 'error' => 'Не удалось подтвердить вход через Telegram']);
+    if ((int)($d['auth_date'] ?? 0) < time() - 86400) out(['success' => false, 'error' => 'Данные входа устарели, попробуйте снова']);
+    $u = tg_user_for($d['id'], $d['username'] ?? '', $_SESSION['ref_id'] ?? 0);
+    if (!$u) out(['success' => false, 'error' => 'Не удалось создать аккаунт']);
+    if ((int)$u['ban'] === 1) out(['success' => false, 'error' => 'Ваш аккаунт заблокирован']);
+    session_regenerate_id(true);
+    $_SESSION['hash'] = $u['hash'];
+    $_SESSION['login'] = 1;
+    out(['success' => true]);
+}
+
 out(['success' => false, 'error' => 'Unknown action']);
