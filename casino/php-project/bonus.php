@@ -131,11 +131,18 @@ setInterval(historys, 5000);
 
 <?php
   $rbU = null;
-  if (!empty($_SESSION['hash'])) { $sh = mysql_real_escape_string($_SESSION['hash']); $rbU = mysql_fetch_array(mysql_query("SELECT bonus_ts, cashback FROM kot_user WHERE hash='$sh'")); }
+  if (!empty($_SESSION['hash'])) { $sh = mysql_real_escape_string($_SESSION['hash']); $rbU = mysql_fetch_array(mysql_query("SELECT bonus_ts, cashback, tg_auth_id FROM kot_user WHERE hash='$sh'")); }
   $rbB = mysql_fetch_array(mysql_query("SELECT min_bonus_size, max_bonus_size, cashback_pct FROM kot_config LIMIT 1"));
   $rbLeft = $rbU ? max(0, (int)$rbU['bonus_ts'] + 86400 - time()) : 0;
   $rbCb = $rbU ? (float)$rbU['cashback'] : 0;
   ?>
+  <style>
+.rb-sub-req { display:flex; align-items:center; gap:8px; margin:10px 0 6px; padding:10px 12px; border-radius:12px; background:rgba(42,171,238,.1); border:1px solid rgba(42,171,238,.3); font-size:12px; line-height:1.4; }
+.rb-sub-req .material-icons { color:#2aabee !important; font-size:20px; flex:0 0 auto; }
+.rb-sub-req span:nth-child(2) { flex:1; min-width:0; }
+.rb-sub-btn { flex:0 0 auto; padding:7px 12px; border-radius:10px; background:linear-gradient(135deg,#2aabee,#1e88d2); color:#fff !important; font-weight:700; text-decoration:none; font-size:12px; }
+.rb-sub-link { display:flex; justify-content:center; margin:6px 0; min-height:36px; }
+</style>
   <!-- Ежедневный бонус -->
   <div class="bw-bonus-card bw-bonus-card-blue" data-testid="daily-bonus-card">
     <div class="bw-bonus-header">
@@ -143,6 +150,14 @@ setInterval(historys, 5000);
       <div class="bw-bonus-title">Ежедневный бонус</div>
     </div>
     <div class="bw-bonus-desc">Раз в 24 часа нажмите кнопку и выбейте случайную сумму от <?= (int)$rbB['min_bonus_size'] ?> до <?= (int)$rbB['max_bonus_size'] ?> ₽ на баланс</div>
+    <div class="rb-sub-req" data-testid="daily-bonus-requirement">
+      <span class="material-icons">campaign</span>
+      <span>Условие: подписка на наш Telegram-канал <b>@rubin_play</b><?= ($rbU && empty($rbU['tg_auth_id'])) ? ' и привязанный Telegram' : '' ?></span>
+      <a class="rb-sub-btn" href="https://t.me/rubin_play" target="_blank" rel="noopener" data-testid="daily-bonus-subscribe-link">Подписаться</a>
+    </div>
+    <?php if ($rbU && empty($rbU['tg_auth_id'])) { require_once __DIR__ . '/inc/tg.php'; $rbBot = ''; try { $rbBot = tg_bot_username(); } catch (Throwable $e) {} ?>
+    <div class="rb-sub-link" data-testid="daily-bonus-link-telegram"><script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="<?= htmlspecialchars($rbBot) ?>" data-size="medium" data-radius="10" data-onauth="tgWidgetAuth(user)" data-request-access="write" data-lang="ru"></script></div>
+    <?php } ?>
     <div class="bw-bonus-meta" id="rbDailyMeta" data-testid="daily-bonus-timer"><?= $rbLeft > 0 ? 'Следующий бонус через ' . sprintf('%02d:%02d:%02d', intdiv($rbLeft, 3600), intdiv($rbLeft % 3600, 60), $rbLeft % 60) : 'Бонус доступен' ?></div>
     <div class="bw-bonus-footer">
       <div class="bw-bonus-amount"><span class="material-icons" style="font-size:18px;">casino</span> <?= (int)$rbB['min_bonus_size'] ?>–<?= (int)$rbB['max_bonus_size'] ?> ₽</div>

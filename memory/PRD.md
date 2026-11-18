@@ -97,3 +97,8 @@ Download zip from Google Drive, run the user's Replit project as-is (no rewrite)
 - Webhook auto-set to <site>/tgbot.php on first login attempt (re-checked every 10 min) — works after domain change/deploy
 - Tested with simulated bot update (401 on bad secret, account created + session set)
 - Iteration 18: switched login UI to official Telegram Login Widget (telegram-widget.js, data-lang=ru) in both auth panels; tglogin.php type=widget verifies HMAC (secret=sha256(bot token)) + auth_date<24h, then same tg_user_for(). Requires BotFather /setdomain for @rubin_win_bot = site domain. Deep-link flow code still present (start/poll) but no UI button.
+
+## Iteration 19 (2026-11) — daily bonus requires @rubin_play subscription
+- Daily bonus 1–25 ₽ (kot_config min/max), payapi dailyBonus: requires kot_user.tg_auth_id (need_tg) and getChatMember(@rubin_play) member/admin/creator/restricted+is_member (need_sub); bot must be channel admin, else "Проверка подписки временно недоступна"
+- Bonus page: requirement banner + Подписаться link; Telegram widget to link Telegram for password accounts (tglogin.php widget links to logged-in user, rejects if TG bound elsewhere)
+- Admin panel: /admin, admins: tst465641 / Test12345, maxdin (original)

@@ -112,6 +112,11 @@ if ($type === 'dailyBonus') {
     $last = (int)$u['bonus_ts'];
     $left = $last + 86400 - time();
     if ($left > 0) out(['success' => false, 'error' => 'Бонус будет доступен через ' . sprintf('%02d:%02d:%02d', intdiv($left, 3600), intdiv($left % 3600, 60), $left % 60), 'left' => $left]);
+    require_once __DIR__ . '/inc/tg.php';
+    if (empty($u['tg_auth_id'])) out(['success' => false, 'need_tg' => true, 'error' => 'Привяжите Telegram, чтобы получать ежедневный бонус']);
+    try { $sub = tg_is_member($u['tg_auth_id']); }
+    catch (Throwable $e) { error_log($e->getMessage()); fail('Проверка подписки временно недоступна, попробуйте позже'); }
+    if (!$sub) out(['success' => false, 'need_sub' => true, 'error' => 'Подпишитесь на канал ' . TG_CHANNEL . ', затем нажмите «Получить» ещё раз']);
     $b = mysql_fetch_array(mysql_query("SELECT min_bonus_size, max_bonus_size FROM kot_config LIMIT 1"));
     $min = max(0, (int)$b['min_bonus_size']); $max = max($min, (int)$b['max_bonus_size']);
     $prize = random_int($min, $max);

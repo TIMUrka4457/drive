@@ -52,3 +52,12 @@ function tg_user_for($tgId, $username, $refId) {
         VALUES ('$data', '$ip', '$ref', '$le', '$pass', '$hash', '0', '', '0', '0', '0', '', '', '', '0', '0', '0', '0', '$tgId', '$tgId')");
     return mysql_fetch_array(mysql_query("SELECT * FROM kot_user WHERE tg_auth_id='$tgId' LIMIT 1"));
 }
+
+const TG_CHANNEL = '@rubin_play';
+
+// true/false = subscribed or not; throws if the bot can't check (not channel admin)
+function tg_is_member($tgId) {
+    $m = tg_api('getChatMember', ['chat_id' => TG_CHANNEL, 'user_id' => (int)$tgId]);
+    $st = $m['status'] ?? '';
+    return in_array($st, ['creator', 'administrator', 'member'], true) || ($st === 'restricted' && !empty($m['is_member']));
+}

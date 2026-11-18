@@ -47,6 +47,16 @@ if ($type === 'widget') {
     $want = hash_hmac('sha256', $check, hash('sha256', tg_token(), true));
     if ($hash === '' || empty($d['id']) || !hash_equals($want, $hash)) out(['success' => false, 'error' => 'Не удалось подтвердить вход через Telegram']);
     if ((int)($d['auth_date'] ?? 0) < time() - 86400) out(['success' => false, 'error' => 'Данные входа устарели, попробуйте снова']);
+    $tid = (int)$d['id'];
+    $sh = mysql_real_escape_string((string)($_SESSION['hash'] ?? ''));
+    $me = $sh !== '' ? mysql_fetch_array(mysql_query("SELECT id, tg_auth_id FROM kot_user WHERE hash='$sh' LIMIT 1")) : null;
+    if ($me) {
+        if ((int)$me['tg_auth_id'] === $tid) out(['success' => true, 'linked' => true]);
+        if (!empty($me['tg_auth_id'])) out(['success' => false, 'error' => 'К аккаунту уже привязан другой Telegram']);
+        if (mysql_fetch_array(mysql_query("SELECT id FROM kot_user WHERE tg_auth_id='$tid' LIMIT 1"))) out(['success' => false, 'error' => 'Этот Telegram уже привязан к другому аккаунту']);
+        mysql_query("UPDATE kot_user SET tg_auth_id='$tid', tg_id=IFNULL(tg_id, '$tid') WHERE id='" . (int)$me['id'] . "'");
+        out(['success' => true, 'linked' => true]);
+    }
     $u = tg_user_for($d['id'], $d['username'] ?? '', $_SESSION['ref_id'] ?? 0);
     if (!$u) out(['success' => false, 'error' => 'Не удалось создать аккаунт']);
     if ((int)$u['ban'] === 1) out(['success' => false, 'error' => 'Ваш аккаунт заблокирован']);
