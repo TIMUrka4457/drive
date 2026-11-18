@@ -80,3 +80,19 @@ Download zip from Google Drive, run the user's Replit project as-is (no rewrite)
 ## Iteration 15 (2026-11)
 - WGC_API_KEY + SLOTS_API_SECRET added via secrets (live key), PHP sees them after frontend restart; WGC API OK, /playslot creates session and redirects to play.worldgamingconnect.com; callback pytest 20/20 pass
 - WGC panel Callback URL: <preview>/api/slots/callback
+
+## Iteration 16 (2026-11) — real CryptoBot + xRocket cashier
+- Keys set: CRYPTOBOT_TOKEN (app "RUBIN PLAY"), XROCKET_TOKEN (Pay API v1, app "Tasty Bronze"), XROCKET_WEBHOOK_SECRET
+- CryptoBot deposit: fiat RUB invoice, all 8 assets, coin chosen inside the bot
+- xRocket migrated from Legacy to Pay API v1 (pay.api.xrocket.exchange, Bearer); deposit coin picked on site (59 coins with RUB rate) because xRocket API returns "Multi-currency support not yet implemented"; expiresIn in ms; webhook v1 HMAC(ts.body) with XROCKET_WEBHOOK_SECRET
+- Withdrawals: USDT or TON (xRocket code GRAM) to Telegram ID, 3% fee (kot_config.fee_crypto=3), live rate at request; kot_withdraws.asset column; payout on admin approve (idempotent spend_id/clientPayoutId)
+- Cashback 5% of each deposit (kot_config.cashback_pct=5)
+- Fixed: withdraw balance check compared varchar balance as string
+- Cashier mobile layout fixed, coin lists removed from method cards, user logos images/pay-cryptobot.png, pay-xrocket.png
+- Both provider app balances are 0 -> payouts fail until funded
+- Webhooks to set: CryptoBot <site>/payhook.php?p=cryptobot (xRocket callback URL is sent per invoice)
+
+## Iteration 17 (2026-11) — Telegram bot login/registration
+- Bot @rubin_win_bot (TELEGRAM_BOT_TOKEN secret). Flow: modal button "Войти через Telegram" -> tglogin.php start (token in rb_tg_login + session) -> t.me/rubin_win_bot?start=login_<token> -> bot webhook tgbot.php (X-Telegram-Bot-Api-Secret-Token = sha256-derived secret) marks token done -> site polls tglogin.php poll -> finds/creates kot_user by verified kot_user.tg_auth_id (unique), login = TG username or tg<id>, keeps referral ref_id
+- Webhook auto-set to <site>/tgbot.php on first login attempt (re-checked every 10 min) — works after domain change/deploy
+- Tested with simulated bot update (401 on bad secret, account created + session set)

@@ -55,6 +55,7 @@ function rb_http($url, $headers, $method = 'POST', $body = null, &$code = null) 
     curl_close($ch);
     if ($raw === false) throw new RuntimeException('Network error: ' . $err);
     $out = json_decode($raw, true);
+    if ($raw === '' && $code >= 200 && $code < 300) return [];
     if (!is_array($out)) throw new RuntimeException('Invalid response (HTTP ' . $code . ')');
     return $out;
 }
@@ -159,7 +160,7 @@ function rb_create_deposit($uid, $provider, $rub, $asset = '') {
         $r = rb_xr('POST', '/api/v1/invoices', [
             'priceAmount' => $crypto, 'priceCurrency' => $asset, 'payCurrencies' => [$asset], 'numPayments' => 1,
             'clientInvoiceId' => 'rubin_dep_' . $lid,
-            'description' => 'Пополнение баланса RUBIN #' . $lid . ' (' . $rub . ' ₽)', 'expiresIn' => 3600,
+            'description' => 'Пополнение баланса RUBIN #' . $lid . ' (' . $rub . ' ₽)', 'expiresIn' => 3600000,
             'callback' => ['callbackUrl' => rb_site_url() . '/payhook.php?p=xrocket', 'payload' => ['id' => $lid]],
             'url' => ['successUrl' => $back, 'cancelUrl' => $back],
         ]);
