@@ -85,6 +85,7 @@ $migrations = [
     ['kot_config.max_win',             'kot_config','max_win',             'DECIMAL(12,2) NOT NULL DEFAULT 0'],
     ['kot_config.fee_qiwi',            'kot_config','fee_qiwi',            'DECIMAL(5,2) NOT NULL DEFAULT 0'],
     ['kot_config.fee_card',            'kot_config','fee_card',            'DECIMAL(5,2) NOT NULL DEFAULT 0'],
+    ['kot_withdraws.asset',            'kot_withdraws','asset',            "VARCHAR(16) NOT NULL DEFAULT 'USDT'"],
     ['kot_config.fee_crypto',          'kot_config','fee_crypto',          'DECIMAL(5,2) NOT NULL DEFAULT 0'],
 
     // kot_promo

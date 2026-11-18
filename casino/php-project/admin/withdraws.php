@@ -86,7 +86,7 @@ $pending_count = (int) mysqli_fetch_assoc(mysqli_query($__conn,
     <tr>
       <td style="color:var(--muted)">#<?= (int)$w['id'] ?></td>
       <td><a href="/admin/users?uid=<?= (int)$w['user_id'] ?>"><?= $display_login ?> #<?= (int)$w['user_id'] ?></a></td>
-      <td><strong><?= number_format((float)$w['sum'], 2) ?> ₽</strong><?php if (!empty($w['amount_crypto'])): ?><br><small style="color:var(--muted)"><?= (float)$w['amount_crypto'] ?> USDT</small><?php endif ?></td>
+      <td><strong><?= number_format((float)$w['sum'], 2) ?> ₽</strong><?php if (!empty($w['amount_crypto'])): ?><br><small style="color:var(--muted)"><?= (float)$w["amount_crypto"] ?> <?= htmlspecialchars($w["asset"] ?? "USDT") ?></small><?php endif ?></td>
       <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis">
         <?= htmlspecialchars($w['wallet'] ?? '—') ?>
       </td>

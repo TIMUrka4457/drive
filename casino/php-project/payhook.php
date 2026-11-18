@@ -21,12 +21,15 @@ if ($p === 'cryptobot') {
 }
 
 if ($p === 'xrocket') {
-    $token = rb_env('XROCKET_TOKEN');
-    $sig = $_SERVER['HTTP_ROCKET_PAY_SIGNATURE'] ?? '';
-    $want = hash_hmac('sha256', $raw, hash('sha256', $token, true));
-    if ($token === '' || $sig === '' || !hash_equals($want, $sig)) { http_response_code(401); exit('bad signature'); }
+    $secret = rb_env('XROCKET_WEBHOOK_SECRET');
+    $sig = $_SERVER['HTTP_SIGNATURE'] ?? '';
+    $ts = $_SERVER['HTTP_SIGNATURE_TIMESTAMP'] ?? '';
+    $ver = $_SERVER['HTTP_SIGNATURE_VERSION'] ?? '';
+    if ($secret === '' || $sig === '' || $ts === '' || $ver !== 'v1') { http_response_code(401); exit('missing signature'); }
+    if (abs((int)(microtime(true) * 1000) - (int)$ts) > 300000) { http_response_code(401); exit('stale webhook'); }
+    if (!hash_equals(hash_hmac('sha256', $ts . '.' . $raw, $secret), $sig)) { http_response_code(401); exit('bad signature'); }
     $d = json_decode($raw, true);
-    $ext = (string)($d['data']['id'] ?? '');
+    $ext = ($d['type'] ?? '') === 'invoice' ? (string)($d['data']['invoice']['id'] ?? '') : '';
     if ($ext !== '') {
         $e = mysql_real_escape_string($ext);
         $inv = mysql_fetch_array(mysql_query("SELECT * FROM rb_invoices WHERE provider='xrocket' AND ext_id='$e'"));

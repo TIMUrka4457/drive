@@ -25,9 +25,23 @@ if ($type === 'createDeposit') {
     if ($sum > 1000000) fail('Слишком большая сумма');
     $pending = mysql_fetch_array(mysql_query("SELECT COUNT(*) c FROM rb_invoices WHERE user_id='$uid' AND status='pending' AND created_at > NOW() - INTERVAL 1 HOUR"));
     if ((int)$pending['c'] >= 5) fail('Слишком много неоплаченных счетов. Оплатите или подождите час');
-    try { $r = rb_create_deposit($uid, $p, $sum); }
+    try { $r = rb_create_deposit($uid, $p, $sum, (string)($_POST['asset'] ?? '')); }
     catch (Throwable $e) { error_log($e->getMessage()); fail('Не удалось создать счёт: ' . $e->getMessage()); }
     out(['success' => true, 'url' => $r['url'], 'id' => $r['id']]);
+}
+
+if ($type === 'assets') {
+    $out = ['success' => true, 'xrocket' => [], 'wd' => []];
+    if ($prov['xrocket']) {
+        try { foreach (rb_xr_assets() as $c => $a) $out['xrocket'][] = ['code' => $c, 'title' => $a['title'], 'rate' => $a['rate']]; }
+        catch (Throwable $e) { error_log($e->getMessage()); }
+    }
+    foreach (['cryptobot', 'xrocket'] as $pp) {
+        if (!$prov[$pp]) continue;
+        foreach (array_keys(RB_WD_ASSETS) as $a) { try { $out['wd'][$pp][$a] = rb_wd_rate($pp, $a); } catch (Throwable $e) {} }
+    }
+    $out['fee'] = $cfg['fee'];
+    out($out);
 }
 
 if ($type === 'checkDeposit') {
@@ -45,7 +59,7 @@ if ($type === 'history') {
     $q = mysql_query("SELECT id, provider, amount_rub, amount_crypto, asset, status, pay_url, created_at FROM rb_invoices WHERE user_id='$uid' ORDER BY id DESC LIMIT 10");
     while ($r = mysql_fetch_assoc($q)) $items[] = $r;
     $wds = [];
-    $q = mysql_query("SELECT id, ps, wallet, sum, amount_crypto, date, status FROM kot_withdraws WHERE user_id='$uid' ORDER BY id DESC LIMIT 10");
+    $q = mysql_query("SELECT id, ps, wallet, sum, amount_crypto, asset, date, status FROM kot_withdraws WHERE user_id='$uid' ORDER BY id DESC LIMIT 10");
     while ($r = mysql_fetch_assoc($q)) $wds[] = $r;
     out(['success' => true, 'deposits' => $items, 'withdraws' => $wds]);
 }
@@ -60,16 +74,18 @@ if ($type === 'withdraw') {
     if ($sum < $cfg['min_wd']) fail('Минимальная сумма вывода ' . $cfg['min_wd'] . ' ₽');
     $wleft = round((float)$u['wager_required'] - (float)$u['wager_progress'], 2);
     if ((float)$u['wager_required'] > 0 && $wleft > 0) fail('Сначала отыграйте вагер: осталось поставить ' . $wleft . ' ₽');
-    $fee = (float)(mysql_fetch_array(mysql_query("SELECT fee_crypto FROM kot_config LIMIT 1"))['fee_crypto'] ?? 0);
-    $usdt = floor($sum * (1 - $fee / 100) / $cfg['rate'] * 100) / 100;
-    if ($usdt < 0.1) fail('Слишком маленькая сумма');
-    mysql_query("UPDATE kot_user SET balance = balance - '$sum' WHERE id='$uid' AND balance >= '$sum'");
+    $asset = (string)($_POST['asset'] ?? 'USDT');
+    try { $rate = rb_wd_rate($p, $asset); } catch (Throwable $e) { fail($e->getMessage()); }
+    $feeRub = round($sum * $cfg['fee'] / 100, 2);
+    $crypto = rb_crypto_amount($sum - $feeRub, $rate, false);
+    if ((float)$crypto * $rate < 50) fail('Слишком маленькая сумма');
+    mysql_query("UPDATE kot_user SET balance = balance - '$sum' WHERE id='$uid' AND (balance + 0) >= $sum");
     if (mysql_affected_rows() < 1) fail('Недостаточно средств');
     mysql_query("UPDATE kot_user SET tg_id='$tg' WHERE id='$uid'");
     $date = date('d.m.Y H:i');
-    mysql_query("INSERT INTO kot_withdraws (user_id, ps, wallet, sum, date, status, fake, login_fake, amount_crypto) VALUES ('$uid', '$p', '$tg', '$sum', '$date', '0', '0', '', '$usdt')");
+    mysql_query("INSERT INTO kot_withdraws (user_id, ps, wallet, sum, date, status, fake, login_fake, amount_crypto, asset) VALUES ('$uid', '$p', '$tg', '$sum', '$date', '0', '0', '', '$crypto', '$asset')");
     $bal = mysql_fetch_array(mysql_query("SELECT balance FROM kot_user WHERE id='$uid'"));
-    out(['success' => true, 'balance' => (float)$bal['balance'], 'usdt' => $usdt]);
+    out(['success' => true, 'balance' => (float)$bal['balance'], 'crypto' => $crypto, 'asset' => $asset, 'fee' => $feeRub]);
 }
 
 if ($type === 'cancelWithdraw') {
